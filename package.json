@@ -4,16 +4,22 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "android:debug": "react-native run-android --variant=debug",
+    "android:release": "react-native run-android --variant=release",
+    "build:android:debug": "cd android && ./gradlew assembleDebug",
+    "build:android:release": "cd android && ./gradlew assembleRelease",
+    "build:android:bundle": "cd android && ./gradlew bundleRelease",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
   },
   "dependencies": {
+    "@react-native/new-app-screen": "0.87.0",
     "react": "19.2.3",
     "react-native": "0.87.0",
-    "@react-native/new-app-screen": "0.87.0",
-    "react-native-safe-area-context": "^5.5.2"
+    "react-native-safe-area-context": "^5.5.2",
+    "react-native-thermal-pos-printer": "^1.6.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
