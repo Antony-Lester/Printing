@@ -21,6 +21,7 @@ import {
 } from 'react-native-safe-area-context';
 import { PrinterDevice, PrinterActionName } from './printers/types';
 import { printerCore } from './printers/core';
+import { debugLog } from './printers/logger';
 
 const actionItems: PrinterActionName[] = [
   'Check status',
@@ -61,32 +62,45 @@ function AppContent() {
   const refreshDevices = React.useCallback(async () => {
     setLoading(true);
     setStatusMessage('Scanning for nearby printer devices...');
+    debugLog('App.refreshDevices', 'Refresh devices pressed');
 
     try {
       const discovered = await printerCore.discoverDevices();
       const combined = [...discovered.bluetooth, ...discovered.wifi];
+      debugLog('App.refreshDevices', 'Discovered devices summary', {
+        bluetoothCount: discovered.bluetooth.length,
+        wifiCount: discovered.wifi.length,
+        combinedCount: combined.length,
+        combined,
+      });
       setDevices(combined);
 
       if (!combined.length) {
-        setStatusMessage(
-          'No printer-like devices found yet. Check Bluetooth permissions or provide a Wi‑Fi IP/port.',
-        );
+        const message =
+          'No printer-like devices found yet. Check Bluetooth permissions or provide a Wi‑Fi IP/port.';
+        setStatusMessage(message);
+        debugLog('App.refreshDevices', message);
       } else {
-        setStatusMessage(
-          `Found ${combined.length} possible printer device(s).`,
-        );
+        const message = `Found ${combined.length} possible printer device(s).`;
+        setStatusMessage(message);
+        debugLog('App.refreshDevices', message, { devices: combined });
       }
     } catch (error) {
-      setStatusMessage(
+      const message =
         error instanceof Error
           ? error.message
-          : 'Failed to discover printer devices.',
-      );
+          : 'Failed to discover printer devices.';
+      setStatusMessage(message);
+      debugLog('App.refreshDevices', 'Discovery error', { error: message });
       setDevices([]);
     } finally {
       setLoading(false);
+      debugLog('App.refreshDevices', 'Refresh complete', {
+        loading: false,
+        deviceCount: devices.length,
+      });
     }
-  }, []);
+  }, [devices.length]);
 
   React.useEffect(() => {
     refreshDevices();

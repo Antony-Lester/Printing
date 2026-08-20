@@ -5,6 +5,7 @@ import {
   PrinterProvider,
 } from './types';
 import { printerProviderManager } from './provider-manager';
+import { debugLog } from './logger';
 
 let activeProvider: PrinterProvider | null = null;
 let activeDevice: PrinterDevice | null = null;
@@ -21,15 +22,33 @@ export const printerCore = {
   async discoverDevices(): Promise<
     Record<'bluetooth' | 'wifi', PrinterDevice[]>
   > {
-    return printerProviderManager.discoverAll();
+    debugLog('printerCore.discoverDevices', 'Starting discovery');
+    const result = await printerProviderManager.discoverAll();
+    debugLog('printerCore.discoverDevices', 'Discovery result', {
+      bluetoothCount: result.bluetooth.length,
+      wifiCount: result.wifi.length,
+      bluetooth: result.bluetooth,
+      wifi: result.wifi,
+    });
+    return result;
   },
 
   async connectToDevice(device: PrinterDevice): Promise<PrinterActionResult> {
+    debugLog('printerCore.connectToDevice', 'Attempting connection', {
+      device,
+      transport: device.transport,
+    });
+
     try {
       const provider = printerProviderManager.getProvider(device.transport);
       const connectedDevice = await provider.connect(device);
       activeProvider = provider;
       activeDevice = connectedDevice;
+
+      debugLog('printerCore.connectToDevice', 'Connection succeeded', {
+        connectedDevice,
+        provider: provider.transport,
+      });
 
       return {
         ok: true,
@@ -38,13 +57,18 @@ export const printerCore = {
         device: connectedDevice,
       };
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to connect to printer.';
+
+      debugLog('printerCore.connectToDevice', 'Connection failed', {
+        device,
+        error: message,
+      });
+
       return {
         ok: false,
         action: 'Check status',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to connect to printer.',
+        message,
         device: null,
       };
     }

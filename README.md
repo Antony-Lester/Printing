@@ -13,3 +13,4 @@ it can be left empty... but a comment is good
 # The published package is missing it, and Gradle requires it to exist
 
 '
+/// logs.... npx react-native log-android
