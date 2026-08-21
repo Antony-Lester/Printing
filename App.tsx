@@ -60,6 +60,7 @@ function AppContent() {
   );
 
   const refreshDevices = React.useCallback(async () => {
+    let discoveredCount = 0;
     setLoading(true);
     setStatusMessage('Scanning for nearby printer devices...');
     debugLog('App.refreshDevices', 'Refresh devices pressed');
@@ -67,6 +68,7 @@ function AppContent() {
     try {
       const discovered = await printerCore.discoverDevices();
       const combined = [...discovered.bluetooth, ...discovered.wifi];
+      discoveredCount = combined.length;
       debugLog('App.refreshDevices', 'Discovered devices summary', {
         bluetoothCount: discovered.bluetooth.length,
         wifiCount: discovered.wifi.length,
@@ -93,14 +95,15 @@ function AppContent() {
       setStatusMessage(message);
       debugLog('App.refreshDevices', 'Discovery error', { error: message });
       setDevices([]);
+      discoveredCount = 0;
     } finally {
       setLoading(false);
       debugLog('App.refreshDevices', 'Refresh complete', {
         loading: false,
-        deviceCount: devices.length,
+        deviceCount: discoveredCount,
       });
     }
-  }, [devices.length]);
+  }, []);
 
   React.useEffect(() => {
     refreshDevices();

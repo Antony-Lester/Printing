@@ -17,7 +17,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "log":"npx react-native log-android"
+    "log": "npx react-native log-android"
   },
   "dependencies": {
     "@react-native/new-app-screen": "0.87.0",
@@ -25,7 +25,8 @@
     "react-native": "0.87.0",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-tcp-socket": "^6.0.0",
-    "react-native-thermal-pos-printer": "^1.6.6"
+    "react-native-thermal-pos-printer": "^1.6.6",
+    "react-native-zeroconf": "^0.14.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

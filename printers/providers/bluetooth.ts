@@ -1,36 +1,9 @@
-import { PermissionsAndroid, Platform } from 'react-native';
 import {
   ReactNativePosPrinter,
   ThermalPrinterDevice,
 } from 'react-native-thermal-pos-printer';
 import { PrinterDevice, PrinterProvider, PrinterStatus } from '../types';
-
-const toPrinterDevice = (device: ThermalPrinterDevice): PrinterDevice => ({
-  id: device.getAddress() || device.getName() || 'bluetooth-device',
-  name: device.getName() || 'Unknown Bluetooth printer',
-  address: device.getAddress() || 'unknown-address',
-  transport: 'bluetooth',
-  connected: device.isConnected(),
-});
-
-const ensureBluetoothPermissions = async (): Promise<boolean> => {
-  if (Platform.OS !== 'android') {
-    return true;
-  }
-
-  const requiredPermissions =
-    Number(Platform.Version) >= 31
-      ? [
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-        ]
-      : [PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION];
-
-  const results = await PermissionsAndroid.requestMultiple(requiredPermissions);
-  return Object.values(results).every(
-    result => result === PermissionsAndroid.RESULTS.GRANTED,
-  );
-};
+import { getDevices, toProcessedPrinterDevice } from '../devices';
 
 export class BluetoothPrinterProvider implements PrinterProvider {
   transport = 'bluetooth' as const;
@@ -38,13 +11,7 @@ export class BluetoothPrinterProvider implements PrinterProvider {
   private currentDevice: ThermalPrinterDevice | null = null;
 
   async discover(): Promise<PrinterDevice[]> {
-    const hasPermission = await ensureBluetoothPermissions();
-    if (!hasPermission) {
-      return [];
-    }
-
-    const devices = await ReactNativePosPrinter.getDeviceList();
-    return devices.map(toPrinterDevice);
+    return getDevices();
   }
 
   async connect(device: PrinterDevice): Promise<PrinterDevice> {
@@ -52,7 +19,7 @@ export class BluetoothPrinterProvider implements PrinterProvider {
       device.address,
     );
     this.currentDevice = connected;
-    return toPrinterDevice(connected);
+    return toProcessedPrinterDevice(connected);
   }
 
   async disconnect(): Promise<void> {

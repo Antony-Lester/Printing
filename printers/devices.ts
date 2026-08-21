@@ -3,6 +3,16 @@ import {
   ReactNativePosPrinter,
   ThermalPrinterDevice,
 } from 'react-native-thermal-pos-printer';
+import { PrinterDevice } from './types';
+import { debugLog } from './logger';
+
+const toPrinterDevice = (device: ThermalPrinterDevice): PrinterDevice => ({
+  id: device.getAddress() || device.getName() || 'bluetooth-device',
+  name: device.getName() || 'Unknown Bluetooth printer',
+  address: device.getAddress() || 'unknown-address',
+  transport: 'bluetooth',
+  connected: device.isConnected(),
+});
 
 const ensureBluetoothPermissions = async (): Promise<boolean> => {
   if (Platform.OS !== 'android') {
@@ -24,24 +34,46 @@ const ensureBluetoothPermissions = async (): Promise<boolean> => {
   );
 };
 
-export const getDevices = async (): Promise<ThermalPrinterDevice[]> => {
+export const processDevices = (
+  devices: ThermalPrinterDevice[],
+): PrinterDevice[] => {
+  const mappedDevices = devices.map(toPrinterDevice);
+  const filteredDevices = mappedDevices.filter(device =>
+    !device.name.toUpperCase().startsWith('AX'),
+  );
+
+  debugLog('devices.processDevices', 'Processed Bluetooth devices', {
+    rawCount: mappedDevices.length,
+    filteredCount: filteredDevices.length,
+    rawDeviceNames: mappedDevices.map(device => device.name),
+    filteredDevices,
+  });
+
+  return filteredDevices;
+};
+
+export const getDevices = async (): Promise<PrinterDevice[]> => {
   try {
     const hasPermissions = await ensureBluetoothPermissions();
 
     if (!hasPermissions) {
-      console.warn(
+      debugLog(
+        'devices.getDevices',
         'Bluetooth permissions were not granted for device discovery.',
       );
       return [];
     }
 
-    const devices: ThermalPrinterDevice[] =
-      await ReactNativePosPrinter.getDeviceList();
-
-    console.log('Available devices:', devices);
-    return devices;
+    const devices = await ReactNativePosPrinter.getDeviceList();
+    return processDevices(devices);
   } catch (error) {
-    console.error('Failed to get device list:', error);
+    debugLog('devices.getDevices', 'Failed to get device list', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 };
+
+export const toProcessedPrinterDevice = (
+  device: ThermalPrinterDevice,
+): PrinterDevice => toPrinterDevice(device);
